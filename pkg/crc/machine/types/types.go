@@ -54,6 +54,7 @@ type ClusterConfig struct {
 	ClusterCACert string
 	KubeConfig    string
 	KubeAdminPass string
+	DeveloperPass string
 	ClusterAPI    string
 	WebConsoleURL string
 	ProxyConfig   *httpproxy.ProxyConfig
