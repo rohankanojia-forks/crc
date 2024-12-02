@@ -1,0 +1,22 @@
+#
+# Copyright (c) 2019 Red Hat, Inc.
+# This program and the accompanying materials are made
+# available under the terms of the Eclipse Public License 2.0
+# which is available at:
+#
+#     https://www.eclipse.org/legal/epl-2.0/
+#
+# SPDX-License-Identifier: EPL-2.0
+#
+# Contributors:
+#   Red Hat, Inc. - initial API and implementation
+#
+
+blank_issues_enabled: true
+contact_links:
+  - name: CRC IRC Community Chat (suitable for short, simple casual discussions)
+    url: https://freenode.net/
+    about: Please ask and answer questions here on 'codeready' channel.
+  - name: CRC GitHub Discussions
+    url: https://github.com/crc-org/crc/discussions
+    about: CRC GitHub Discussions
