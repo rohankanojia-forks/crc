@@ -4,13 +4,16 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 	"unsafe"
 )
 
 var (
-	supportedShell = []string{"cmd", "powershell"}
+	supportedShell = []string{"cmd", "powershell", "bash", "zsh", "fish"}
 )
 
 // re-implementation of private function in https://github.com/golang/go/blob/master/src/syscall/syscall_windows.go
@@ -49,7 +52,7 @@ func getNameAndItsPpid(pid uint32) (exefile string, parentid uint32, err error) 
 	if err != nil {
 		return "", 0, err
 	}
-
+	
 	name := syscall.UTF16ToString(pe.ExeFile[:])
 	return name, pe.ParentProcessID, nil
 }
@@ -62,6 +65,10 @@ func shellType(shell string, defaultShell string) string {
 		return "powershell"
 	case strings.Contains(strings.ToLower(shell), "cmd"):
 		return "cmd"
+	case strings.Contains(strings.ToLower(shell), "wsl"):
+		return detectShellInWindowsSubsystemLinux("bash")
+	case filepath.IsAbs(shell) && strings.Contains(strings.ToLower(shell), "bash"):
+		return "bash"
 	default:
 		return defaultShell
 	}
@@ -95,4 +102,63 @@ func detect() (string, error) {
 	}
 
 	return shellType(shell, "cmd"), nil
+}
+
+func detectShellInWindowsSubsystemLinux(defaultShell string) string {
+	cmd := exec.Command("wsl", "-e", "bash", "-c", "ps -ao pid,comm")
+	output, err := cmd.Output()
+	if err != nil {
+		return defaultShell
+	}
+
+	return inspectWslProcessForRecentlyUsedShell(string(output))
+}
+
+func inspectWslProcessForRecentlyUsedShell(psCommandOutput string) string {
+	type ProcessOutput struct {
+		processId string
+		output    string
+	}
+	var processOutputs []ProcessOutput
+	lines := strings.Split(psCommandOutput, "\n")[1:]
+	for _, line := range lines {
+		lineParts := strings.Split(strings.TrimSpace(line), " ")
+		if len(lineParts) == 2 && (strings.Contains(lineParts[1], "zsh") ||
+			strings.Contains(lineParts[1], "bash") ||
+			strings.Contains(lineParts[1], "fish")) {
+			processOutputs = append(processOutputs, ProcessOutput{
+				processId: lineParts[0],
+				output:    lineParts[1],
+			})
+		}
+	}
+	sort.Slice(processOutputs, func(i, j int) bool {
+		return processOutputs[i].processId < processOutputs[j].processId
+	})
+	return processOutputs[0].output
+}
+
+func isWindowsSubsystemLinux() bool {
+	procVersionContent, err := os.ReadFile("/proc/version")
+	if err != nil {
+		return false
+	}
+	return doesVersionFileContainsWSL(string(procVersionContent))
+}
+
+func doesVersionFileContainsWSL(procVersionContent string) bool {
+	if strings.Contains(procVersionContent, "Microsoft") ||
+		strings.Contains(procVersionContent, "WSL") {
+		return true
+	}
+	return false
+}
+
+func convertToWindowsSubsystemLinuxPath(path string) string {
+	cmd := exec.Command("wsl", "-e", "bash", "-c", fmt.Sprintf("wslpath -a '%s'", path))
+	convertedWslPath, err := cmd.Output()
+	if err != nil {
+		return path
+	}
+	return strings.TrimSpace(string(convertedWslPath))
 }

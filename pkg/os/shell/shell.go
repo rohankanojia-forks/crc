@@ -65,9 +65,9 @@ func GetEnvString(userShell string, envName string, envValue string) string {
 	case "cmd":
 		return fmt.Sprintf("SET %s=%s", envName, envValue)
 	case "fish":
-		return fmt.Sprintf("contains %s $fish_user_paths; or set -U fish_user_paths %s $fish_user_paths", envValue, envValue)
+		return fmt.Sprintf("contains %s $fish_user_paths; or set -U fish_user_paths %s $fish_user_paths", convertToLinuxStylePath(userShell, envValue), convertToLinuxStylePath(userShell, envValue))
 	default:
-		return fmt.Sprintf("export %s=\"%s\"", envName, envValue)
+		return fmt.Sprintf("export %s=\"%s\"", envName, convertToLinuxStylePath(userShell, envValue))
 	}
 }
 
@@ -81,8 +81,22 @@ func GetPathEnvString(userShell string, prependedPath string) string {
 	case "cmd":
 		pathStr = fmt.Sprintf("%s;%%PATH%%", prependedPath)
 	default:
-		pathStr = fmt.Sprintf("%s:$PATH", prependedPath)
+		pathStr = fmt.Sprintf("%s:$PATH", convertToLinuxStylePath(userShell, prependedPath))
 	}
 
 	return GetEnvString(userShell, "PATH", pathStr)
+}
+
+func convertToLinuxStylePath(userShell string, path string) string {
+	if isWindowsSubsystemLinux() {
+		return convertToWindowsSubsystemLinuxPath(path)
+	}
+	if strings.Contains(path, "\\") &&
+		(userShell == "bash" || userShell == "zsh" || userShell == "fish") {
+		path = strings.ReplaceAll(path, ":", "")
+		path = strings.ReplaceAll(path, "\\", "/")
+
+		return fmt.Sprintf("/%s", path)
+	}
+	return path
 }

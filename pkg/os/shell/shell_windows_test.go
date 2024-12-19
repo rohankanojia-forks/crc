@@ -43,3 +43,29 @@ func TestGetNameAndItsPpidOfParent(t *testing.T) {
 	assert.Equal(t, "go.exe", shell)
 	assert.NoError(t, err)
 }
+
+func TestSupportedShells(t *testing.T) {
+	assert.Equal(t, []string{"cmd", "powershell", "bash", "zsh", "fish"}, supportedShell)
+}
+
+func TestShellType(t *testing.T) {
+	tests := []struct {
+		name              string
+		userShell         string
+		expectedShellType string
+	}{
+		{"git bash", "C:\\Program Files\\Git\\usr\\bin\\bash.exe", "bash"},
+		{"powershell", "powershell", "powershell"},
+		{"cmd.exe", "cmd.exe", "cmd"},
+		{"pwsh", "pwsh.exe", "powershell"},
+		{"empty value", "", "cmd"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := shellType(tt.userShell, "cmd")
+			if result != tt.expectedShellType {
+				t.Errorf("shellType(%s) = %s; want %s", tt.userShell, result, tt.expectedShellType)
+			}
+		})
+	}
+}
