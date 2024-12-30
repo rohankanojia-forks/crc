@@ -12,31 +12,32 @@ import (
 )
 
 const (
-	Bundle                   = "bundle"
-	CPUs                     = "cpus"
-	Memory                   = "memory"
-	DiskSize                 = "disk-size"
-	NameServer               = "nameserver"
-	PullSecretFile           = "pull-secret-file"
-	DisableUpdateCheck       = "disable-update-check"
-	ExperimentalFeatures     = "enable-experimental-features"
-	NetworkMode              = "network-mode"
-	HostNetworkAccess        = "host-network-access"
-	HTTPProxy                = "http-proxy"
-	HTTPSProxy               = "https-proxy"
-	NoProxy                  = "no-proxy"
-	ProxyCAFile              = "proxy-ca-file"
-	ConsentTelemetry         = "consent-telemetry"
-	EnableClusterMonitoring  = "enable-cluster-monitoring"
-	KubeAdminPassword        = "kubeadmin-password"
-	Preset                   = "preset"
-	EnableSharedDirs         = "enable-shared-dirs"
-	SharedDirPassword        = "shared-dir-password" // #nosec G101
-	IngressHTTPPort          = "ingress-http-port"
-	IngressHTTPSPort         = "ingress-https-port"
-	EmergencyLogin           = "enable-emergency-login"
-	PersistentVolumeSize     = "persistent-volume-size"
-	EnableBundleQuayFallback = "enable-bundle-quay-fallback"
+	Bundle                    = "bundle"
+	CPUs                      = "cpus"
+	Memory                    = "memory"
+	DiskSize                  = "disk-size"
+	NameServer                = "nameserver"
+	PullSecretFile            = "pull-secret-file"
+	DisableUpdateCheck        = "disable-update-check"
+	ExperimentalFeatures      = "enable-experimental-features"
+	NetworkMode               = "network-mode"
+	HostNetworkAccess         = "host-network-access"
+	HTTPProxy                 = "http-proxy"
+	HTTPSProxy                = "https-proxy"
+	NoProxy                   = "no-proxy"
+	ProxyCAFile               = "proxy-ca-file"
+	PullSecretStoredInKeyring = "pull-secret-stored-keyring"
+	ConsentTelemetry          = "consent-telemetry"
+	EnableClusterMonitoring   = "enable-cluster-monitoring"
+	KubeAdminPassword         = "kubeadmin-password"
+	Preset                    = "preset"
+	EnableSharedDirs          = "enable-shared-dirs"
+	SharedDirPassword         = "shared-dir-password" // #nosec G101
+	IngressHTTPPort           = "ingress-http-port"
+	IngressHTTPSPort          = "ingress-https-port"
+	EmergencyLogin            = "enable-emergency-login"
+	PersistentVolumeSize      = "persistent-volume-size"
+	EnableBundleQuayFallback  = "enable-bundle-quay-fallback"
 )
 
 func RegisterSettings(cfg *Config) {
@@ -124,6 +125,8 @@ func RegisterSettings(cfg *Config) {
 		"Hosts, ipv4 addresses or CIDR which do not use a proxy (string, comma-separated list such as '127.0.0.1,192.168.100.1/24')")
 	cfg.AddSetting(ProxyCAFile, Path(""), validatePath, SuccessfullyApplied,
 		"Path to an HTTPS proxy certificate authority (CA)")
+	cfg.AddSetting(PullSecretStoredInKeyring, false, ValidateBool, SuccessfullyApplied,
+		"View whether pull secret stored in credential manager (true/false, default: false)")
 
 	cfg.AddSetting(EnableClusterMonitoring, false, ValidateBool, SuccessfullyApplied,
 		"Enable cluster monitoring Operator (true/false, default: false)")

@@ -63,7 +63,7 @@ var genericCleanupChecks = []Check{
 	},
 	{
 		cleanupDescription: "Removing pull secret from the keyring",
-		cleanup:            cluster.ForgetPullSecret,
+		cleanup:            removePullSecretFromKeyring,
 		flags:              CleanUpOnly,
 
 		labels: None,
@@ -82,6 +82,14 @@ var genericCleanupChecks = []Check{
 
 		labels: None,
 	},
+}
+
+func removePullSecretFromKeyring() error {
+	err := cluster.ForgetPullSecret()
+	if err == nil {
+
+	}
+	return err
 }
 
 func checkBundleExtracted(bundlePath string) func() error {

@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"fmt"
+	crcConfig "github.com/crc-org/crc/v2/pkg/crc/config"
 	"math/rand"
 	"os"
 	"strconv"
@@ -299,6 +300,10 @@ func (client *client) Start(ctx context.Context, startConfig types.StartConfig) 
 		_, err = startConfig.PullSecret.Value()
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to ask for pull secret")
+		}
+		_, err := client.config.Set(crcConfig.PullSecretStoredInKeyring, true)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to set config option "+crcConfig.PullSecretStoredInKeyring)
 		}
 
 		logging.Infof("Creating CRC VM for %s %s...", startConfig.Preset.ForDisplay(), crcBundleMetadata.GetVersion())
