@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/containers/common/pkg/strongunits"
 	"io"
 	"net/url"
 	"os"
@@ -44,14 +45,14 @@ type status struct {
 	CrcStatus            string                       `json:"crcStatus,omitempty"`
 	OpenShiftStatus      types.OpenshiftStatus        `json:"openshiftStatus,omitempty"`
 	OpenShiftVersion     string                       `json:"openshiftVersion,omitempty"`
-	DiskUsage            int64                        `json:"diskUsage,omitempty"`
-	DiskSize             int64                        `json:"diskSize,omitempty"`
-	CacheUsage           int64                        `json:"cacheUsage,omitempty"`
+	DiskUsage            strongunits.B                `json:"diskUsage,omitempty"`
+	DiskSize             strongunits.B                `json:"diskSize,omitempty"`
+	CacheUsage           strongunits.B                `json:"cacheUsage,omitempty"`
 	CacheDir             string                       `json:"cacheDir,omitempty"`
-	RAMSize              int64                        `json:"ramSize,omitempty"`
-	RAMUsage             int64                        `json:"ramUsage,omitempty"`
-	PersistentVolumeUse  int                          `json:"persistentVolumeUsage,omitempty"`
-	PersistentVolumeSize int                          `json:"persistentVolumeSize,omitempty"`
+	RAMSize              strongunits.B                `json:"ramSize,omitempty"`
+	RAMUsage             strongunits.B                `json:"ramUsage,omitempty"`
+	PersistentVolumeUse  strongunits.B                `json:"persistentVolumeUsage,omitempty"`
+	PersistentVolumeSize strongunits.B                `json:"persistentVolumeSize,omitempty"`
 	Preset               preset.Preset                `json:"preset"`
 }
 
@@ -67,8 +68,8 @@ func runWatchStatus(writer io.Writer, client *daemonclient.Client, cacheDir stri
 
 	status := getStatus(client, cacheDir)
 	// do not render RAM size/use
-	status.RAMSize = -1
-	status.RAMUsage = -1
+	status.RAMSize = 0
+	status.RAMUsage = 0
 	renderError := render(status, writer, outputFormat)
 	if renderError != nil {
 		return renderError
@@ -107,8 +108,8 @@ func runWatchStatus(writer io.Writer, client *daemonclient.Client, cacheDir stri
 			}
 		}
 
-		ramBar.SetTotal(loadResult.RAMSize)
-		ramBar.SetCurrent(loadResult.RAMUse)
+		ramBar.SetTotal(int64(loadResult.RAMSize))
+		ramBar.SetCurrent(int64(loadResult.RAMUse))
 		for i, cpuLoad := range loadResult.CPUUse {
 			cpuBars[i].SetCurrent(cpuLoad)
 		}
@@ -173,7 +174,7 @@ func getStatus(client *daemonclient.Client, cacheDir string) *status {
 		DiskSize:             clusterStatus.DiskSize,
 		RAMSize:              clusterStatus.RAMSize,
 		RAMUsage:             clusterStatus.RAMUse,
-		CacheUsage:           size,
+		CacheUsage:           strongunits.B(size),
 		PersistentVolumeUse:  clusterStatus.PersistentVolumeUse,
 		PersistentVolumeSize: clusterStatus.PersistentVolumeSize,
 		CacheDir:             cacheDir,
@@ -197,7 +198,7 @@ func (s *status) prettyPrintTo(writer io.Writer) error {
 
 	lines = append(lines, line{s.Preset.ForDisplay(), openshiftStatus(s)})
 
-	if s.RAMSize != -1 && s.RAMUsage != -1 {
+	if s.RAMSize != 0 && s.RAMUsage != 0 {
 		lines = append(lines, line{"RAM Usage", fmt.Sprintf(
 			"%s of %s",
 			units.HumanSize(float64(s.RAMUsage)),

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/containers/common/pkg/strongunits"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -68,10 +69,10 @@ func TestStatus(t *testing.T) {
 			CrcStatus:        "Running",
 			OpenshiftStatus:  "Running",
 			OpenshiftVersion: "4.5.1",
-			DiskUse:          int64(10000000000),
-			DiskSize:         int64(20000000000),
-			RAMUse:           int64(1000),
-			RAMSize:          int64(2000),
+			DiskUse:          strongunits.B(10000000000),
+			DiskSize:         strongunits.B(20000000000),
+			RAMUse:           strongunits.B(1000),
+			RAMSize:          strongunits.B(2000),
 			Preset:           preset.OpenShift,
 		},
 		statusResult,
@@ -224,7 +225,7 @@ func TestConfigGetMultiple(t *testing.T) {
 		apiClient.GetConfigResult{
 			Configs: map[string]interface{}{
 				"cpus":   float64(4),
-				"memory": float64(10752),
+				"memory": strongunits.MiB(10752),
 			},
 		},
 		configGetMultiplePropertyResult,

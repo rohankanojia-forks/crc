@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/containers/common/pkg/strongunits"
 	"runtime"
 
 	"github.com/crc-org/crc/v2/pkg/crc/constants"
@@ -155,7 +156,7 @@ func defaultCPUs(cfg Storage) uint {
 	return constants.GetDefaultCPUs(GetPreset(cfg))
 }
 
-func defaultMemory(cfg Storage) uint {
+func defaultMemory(cfg Storage) strongunits.MiB {
 	return constants.GetDefaultMemory(GetPreset(cfg))
 }
 

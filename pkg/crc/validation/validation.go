@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/containers/common/pkg/strongunits"
 	"net"
 	"net/url"
 	"os"
@@ -27,14 +28,14 @@ func ValidateCPUs(value uint, preset crcpreset.Preset) error {
 }
 
 // ValidateMemory checks if provided Memory count is valid
-func ValidateMemory(value uint, preset crcpreset.Preset) error {
+func ValidateMemory(value strongunits.MiB, preset crcpreset.Preset) error {
 	if value < constants.GetDefaultMemory(preset) {
 		return fmt.Errorf("requires memory in MiB >= %d", constants.GetDefaultMemory(preset))
 	}
 	return ValidateEnoughMemory(value)
 }
 
-func ValidateDiskSize(value uint) error {
+func ValidateDiskSize(value strongunits.GiB) error {
 	if value < constants.DefaultDiskSize {
 		return fmt.Errorf("requires disk size in GiB >= %d", constants.DefaultDiskSize)
 	}
@@ -51,7 +52,7 @@ func ValidatePersistentVolumeSize(value int) error {
 }
 
 // ValidateEnoughMemory checks if enough memory is installed on the host
-func ValidateEnoughMemory(value uint) error {
+func ValidateEnoughMemory(value strongunits.MiB) error {
 	totalMemory := memory.TotalMemory()
 	logging.Debugf("Total memory of system is %d bytes", totalMemory)
 	valueBytes := value * 1024 * 1024

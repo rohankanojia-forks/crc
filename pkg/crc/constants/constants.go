@@ -2,6 +2,7 @@ package constants
 
 import (
 	"fmt"
+	"github.com/containers/common/pkg/strongunits"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,7 +14,7 @@ import (
 
 const (
 	DefaultName     = "crc"
-	DefaultDiskSize = 31
+	DefaultDiskSize = strongunits.GiB(31)
 
 	DefaultPersistentVolumeSize = 15
 
@@ -211,7 +212,7 @@ func GetDefaultCPUs(preset crcpreset.Preset) uint {
 	}
 }
 
-func GetDefaultMemory(preset crcpreset.Preset) uint {
+func GetDefaultMemory(preset crcpreset.Preset) strongunits.MiB {
 	switch preset {
 	case crcpreset.OpenShift, crcpreset.OKD:
 		return 10752

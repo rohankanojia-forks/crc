@@ -2,6 +2,7 @@ package api
 
 import (
 	gocontext "context"
+	"github.com/containers/common/pkg/strongunits"
 	"net/http"
 
 	"github.com/crc-org/crc/v2/pkg/crc/api/client"
@@ -121,8 +122,8 @@ func (h *Handler) Start(c *context) error {
 func getStartConfig(cfg crcConfig.Storage, args client.StartConfig) types.StartConfig {
 	return types.StartConfig{
 		BundlePath:               cfg.Get(crcConfig.Bundle).AsString(),
-		Memory:                   cfg.Get(crcConfig.Memory).AsUInt(),
-		DiskSize:                 cfg.Get(crcConfig.DiskSize).AsUInt(),
+		Memory:                   strongunits.MiB(cfg.Get(crcConfig.Memory).AsUInt()),
+		DiskSize:                 strongunits.GiB(cfg.Get(crcConfig.DiskSize).AsUInt()),
 		CPUs:                     cfg.Get(crcConfig.CPUs).AsUInt(),
 		NameServer:               cfg.Get(crcConfig.NameServer).AsString(),
 		PullSecret:               cluster.NewNonInteractivePullSecretLoader(cfg, args.PullSecretFile),

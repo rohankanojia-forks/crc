@@ -3,6 +3,7 @@ package machine
 import (
 	"context"
 	"fmt"
+	"github.com/containers/common/pkg/strongunits"
 
 	"github.com/crc-org/crc/v2/pkg/crc/cluster"
 	"github.com/crc-org/crc/v2/pkg/crc/config"
@@ -11,7 +12,6 @@ import (
 	"github.com/crc-org/crc/v2/pkg/crc/machine/state"
 	"github.com/crc-org/crc/v2/pkg/crc/machine/types"
 	"github.com/crc-org/crc/v2/pkg/crc/preset"
-	"github.com/docker/go-units"
 	"github.com/pkg/errors"
 )
 
@@ -54,7 +54,7 @@ func (client *client) Status() (*types.ClusterStatusResult, error) {
 	return createClusterStatusResult(vmStatus, vm.bundle.GetBundleType(), vm.bundle.GetVersion(), ip, ramSize, ramUse, diskSize, diskUse, pvSize, pvUse, openShiftStatusSupplier)
 }
 
-func createClusterStatusResult(vmStatus state.State, bundleType preset.Preset, vmBundleVersion, vmIP string, diskSize, diskUse, ramSize, ramUse int64, pvUse, pvSize int, openShiftStatusSupplier openShiftStatusSupplierFunc) (*types.ClusterStatusResult, error) {
+func createClusterStatusResult(vmStatus state.State, bundleType preset.Preset, vmBundleVersion, vmIP string, diskSize, diskUse, ramSize, ramUse strongunits.B, pvUse, pvSize strongunits.B, openShiftStatusSupplier openShiftStatusSupplierFunc) (*types.ClusterStatusResult, error) {
 	clusterStatusResult := &types.ClusterStatusResult{
 		CrcStatus:        vmStatus,
 		OpenshiftVersion: vmBundleVersion,
@@ -93,8 +93,8 @@ func (client *client) GetClusterLoad() (*types.ClusterLoadResult, error) {
 	if err != nil {
 		if errors.Is(err, errMissingHost(client.name)) {
 			return &types.ClusterLoadResult{
-				RAMUse:  -1,
-				RAMSize: -1,
+				RAMUse:  0,
+				RAMSize: 0,
 				CPUUse:  nil,
 			}, nil
 		}
@@ -108,8 +108,8 @@ func (client *client) GetClusterLoad() (*types.ClusterLoadResult, error) {
 	}
 	if vmStatus != state.Running {
 		return &types.ClusterLoadResult{
-			RAMUse:  -1,
-			RAMSize: -1,
+			RAMUse:  0,
+			RAMSize: 0,
 			CPUUse:  nil,
 		}, nil
 	}
@@ -124,7 +124,7 @@ func (client *client) GetClusterLoad() (*types.ClusterLoadResult, error) {
 	}, nil
 }
 
-func (client *client) getDiskDetails(vm *virtualMachine) (int64, int64) {
+func (client *client) getDiskDetails(vm *virtualMachine) (strongunits.B, strongunits.B) {
 	disk, err, _ := client.diskDetails.Memoize("disks", func() (interface{}, error) {
 		sshRunner, err := vm.SSHRunner()
 		if err != nil {
@@ -141,7 +141,7 @@ func (client *client) getDiskDetails(vm *virtualMachine) (int64, int64) {
 		logging.Debugf("Cannot get root partition usage: %v", err)
 		return 0, 0
 	}
-	return disk.([]int64)[0], disk.([]int64)[1]
+	return strongunits.B(disk.([]int64)[0]), strongunits.B(disk.([]int64)[1])
 }
 
 func getOpenShiftStatus(ctx context.Context, ip string) types.OpenshiftStatus {
@@ -174,7 +174,7 @@ func getStatus(status *cluster.Status) types.OpenshiftStatus {
 	return types.OpenshiftStopped
 }
 
-func (client *client) getRAMStatus(vm *virtualMachine) (int64, int64) {
+func (client *client) getRAMStatus(vm *virtualMachine) (strongunits.B, strongunits.B) {
 	ram, err, _ := client.ramDetails.Memoize("ram", func() (interface{}, error) {
 		sshRunner, err := vm.SSHRunner()
 		if err != nil {
@@ -190,10 +190,10 @@ func (client *client) getRAMStatus(vm *virtualMachine) (int64, int64) {
 
 	if err != nil {
 		logging.Debugf("Cannot get RAM usage: %v", err)
-		return -1, -1
+		return 0, 0
 	}
 
-	return ram.([]int64)[0], ram.([]int64)[1]
+	return strongunits.B(ram.([]int64)[0]), strongunits.B(ram.([]int64)[1])
 }
 
 func (client *client) getCPUStatus(vm *virtualMachine) []int64 {
@@ -214,7 +214,7 @@ func (client *client) getCPUStatus(vm *virtualMachine) []int64 {
 
 }
 
-func (client *client) getPVCSize(vm *virtualMachine) (int, int) {
+func (client *client) getPVCSize(vm *virtualMachine) (strongunits.B, strongunits.B) {
 	sshRunner, err := vm.SSHRunner()
 	if err != nil {
 		logging.Debugf("Cannot get SSH runner: %v", err)
@@ -227,5 +227,5 @@ func (client *client) getPVCSize(vm *virtualMachine) (int, int) {
 		logging.Debugf("Cannot get PVC usage: %v", err)
 		return 0, 0
 	}
-	return used, total.AsInt() * units.GB
+	return strongunits.B(used), strongunits.GiB(total.AsInt()).ToBytes()
 }
