@@ -3,7 +3,9 @@ package config
 import (
 	"fmt"
 	"github.com/containers/common/pkg/strongunits"
+	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/crc-org/crc/v2/pkg/crc/constants"
@@ -48,7 +50,8 @@ func validateDiskSize(value interface{}) (bool, string) {
 func validatePersistentVolumeSize(value interface{}) (bool, string) {
 	diskSize, err := cast.ToIntE(value)
 	if err != nil {
-		return false, fmt.Sprintf("could not convert '%s' to integer", value)
+		return validateStorageUnit(value)
+		//return false, fmt.Sprintf("could not convert '%s' to integer", value)
 	}
 	if err := validation.ValidatePersistentVolumeSize(diskSize); err != nil {
 		return false, err.Error()
@@ -74,7 +77,8 @@ func validateCPUs(value interface{}, preset crcpreset.Preset) (bool, string) {
 var validateMemory = func(value interface{}, preset crcpreset.Preset) (bool, string) {
 	valueAsInt, err := cast.ToUintE(value)
 	if err != nil {
-		return false, fmt.Sprintf("requires integer value in MiB >= %d", constants.GetDefaultMemory(preset))
+		return validateStorageUnit(value)
+		//return false, fmt.Sprintf("requires integer value in MiB >= %d", constants.GetDefaultMemory(preset))
 	}
 	memory := strongunits.MiB(valueAsInt)
 	if err := validation.ValidateMemory(memory, preset); err != nil {
@@ -162,4 +166,44 @@ func validatePort(value interface{}) (bool, string) {
 		return false, fmt.Sprintf("Provided %d but requires value in range of 1024-65535", port)
 	}
 	return true, ""
+}
+
+func validateStorageUnit(value interface{}) (bool, string) {
+	stringValue, err := cast.ToStringE(value)
+	if err != nil {
+		return false, fmt.Sprintf("invalid storage unit '%s'", value)
+	}
+	_, err = parseStorageUnitE(stringValue)
+	if err != nil {
+		return false, fmt.Sprintf("invalid storage unit '%s': %s", stringValue, err.Error())
+	}
+	return true, ""
+}
+
+func parseStorageUnitE(value string) (strongunits.StorageUnits, error) {
+	re := regexp.MustCompile(`^(?i)(\d+)\s*(B|GB|MB|KB)?$`)
+	matches := re.FindStringSubmatch(value)
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("could not parse storage unit: %s", value)
+	}
+	amount, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return nil, fmt.Errorf("could not parse storage unit: %s", value)
+	}
+	unit := strings.ToUpper(matches[2])
+	var parsedStorageUnit strongunits.StorageUnits
+	switch unit {
+	case "KB":
+		parsedStorageUnit = strongunits.KiB(amount)
+	case "MB":
+		parsedStorageUnit = strongunits.MiB(amount)
+	case "GB":
+		parsedStorageUnit = strongunits.GiB(amount)
+	case "B":
+	case "":
+		parsedStorageUnit = strongunits.B(amount)
+	default:
+		return nil, fmt.Errorf("unsupported storage unit in: %s", value)
+	}
+	return parsedStorageUnit, nil
 }

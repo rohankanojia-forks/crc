@@ -1,6 +1,9 @@
 package config
 
-import "github.com/spf13/cast"
+import (
+	"github.com/containers/common/pkg/strongunits"
+	"github.com/spf13/cast"
+)
 
 type Storage interface {
 	Get(key string) SettingValue
@@ -43,6 +46,15 @@ func (v SettingValue) AsInt() int {
 
 func (v SettingValue) AsUInt() uint {
 	return cast.ToUint(v.Value)
+}
+
+func (v SettingValue) AsStrongUnitMiB() strongunits.MiB {
+	stringValue := cast.ToString(v.Value)
+	storageValue, err := parseStorageUnit(stringValue)
+	if err != nil {
+
+	}
+	return strongunits.ToMib(storageValue)
 }
 
 // validationFnType takes the key, value as args and checks if valid
