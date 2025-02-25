@@ -5,7 +5,7 @@ on:
     workflows: [Build Windows artifacts]
     types:
       - completed
-  
+
 jobs:
   windows-e2e-ocp:
     # https://docs.github.com/en/webhooks/webhook-events-and-payloads#workflow_run
@@ -13,7 +13,7 @@ jobs:
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.triggering_actor != 'dependabot[bot]'
-    uses: crc-org/crc/.github/workflows/windows-qe-tpl.yml@main
+    uses: rohankanojia-forks/crc/.github/workflows/windows-qe-tpl.yml@main
     strategy:
       fail-fast: false
       matrix:
@@ -31,4 +31,4 @@ jobs:
       qe-type: ${{matrix.qe-type}}
       preset: ${{matrix.preset}}
     secrets: inherit
-    
+

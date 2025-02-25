@@ -5,14 +5,14 @@ on:
     workflows: [Build Windows artifacts]
     types:
       - completed
-  
+
 jobs:
   linux-qe:
-    if: | 
+    if: |
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.triggering_actor != 'dependabot[bot]'
-    uses: crc-org/crc/.github/workflows/linux-qe-template.yml@main
+    uses: rohankanojia-forks/crc/.github/workflows/linux-qe-template.yml@main
     strategy:
       fail-fast: false
       matrix:
