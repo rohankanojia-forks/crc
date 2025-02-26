@@ -60,6 +60,8 @@ func TestVersion(t *testing.T) {
 }
 
 func TestStatus(t *testing.T) {
+
+	
 	client := newTestClient()
 	defer client.Close()
 	statusResult, err := client.Status()
