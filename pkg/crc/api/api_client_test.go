@@ -27,6 +27,8 @@ type testClient struct {
 
 func (client *testClient) Close() {
 	client.httpServer.Close()
+
+	
 }
 
 func newTestClient() *testClient {
