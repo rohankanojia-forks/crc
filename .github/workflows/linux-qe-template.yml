@@ -38,6 +38,7 @@ jobs:
           # Get origin commit sha for testing
           commit_sha=${{ github.event.workflow_run.head_commit.id }}
           echo "head commit is ${commit_sha}"
+          echo "head_sha is ${{ github.event.workflow_run.head_sha }} "
           if [[ -z "${commit_sha}" ]] || [[ "${commit_sha}" == null ]]; then
             # if .head_commit.id is empty, then .head_sha is used as commit instead
             commit_sha=${{ github.event.workflow_run.head_sha }}
