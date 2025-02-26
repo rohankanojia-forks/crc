@@ -3,6 +3,7 @@ package testsuite
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -404,8 +405,6 @@ func InitializeScenario(s *godog.ScenarioContext) {
 		util.CommandReturnShouldNotContain)
 	s.Step(`^(stdout|stderr|exitcode) (?:should|does not) contain$`,
 		util.CommandReturnShouldNotContainContent)
-	s.Step(`^(stdout|stderr|exitcode) (?:should contain|contains) correct version$`,
-		CommandReturnShouldContainCorrectVersion)
 
 	s.Step(`^(stdout|stderr|exitcode) (?:should equal|equals) "(.*)"$`,
 		util.CommandReturnShouldEqual)
@@ -554,6 +553,8 @@ func InitializeScenario(s *godog.ScenarioContext) {
 		EnsureMicroshiftClusterIsOperational)
 	s.Step(`^kubeconfig is cleaned up$`,
 		EnsureKubeConfigIsCleanedUp)
+	s.Step(`^crc version has expected output$`,
+		EnsureCrcVersionIsCorrect)
 
 	s.After(func(ctx context.Context, _ *godog.Scenario, err error) (context.Context, error) {
 
@@ -642,13 +643,49 @@ func CheckOutputMatchWithRetry(retryCount int, retryTime string, command string,
 	return matchErr
 }
 
-func CommandReturnShouldContainCorrectVersion() error {
-
-	if CRCVersion == "" {
-		return util.CommandReturnShouldContain("stdout", "version:")
+func EnsureCrcVersionIsCorrect() error {
+	err := util.ExecuteCommand("crc version -ojson")
+	if err != nil {
+		return fmt.Errorf("could not execute 'crc version -ojson' command: %v", err)
 	}
-
-	return util.CommandReturnShouldContain("stdout", CRCVersion)
+	crcVersionJsonOutput := util.GetLastCommandOutput("stdout")
+	type CrcVersionOutput struct {
+		Version           string `json:"version"`
+		Commit            string `json:"commit"`
+		OpenShiftVersion  string `json:"openshiftVersion"`
+		MicroShiftVersion string `json:"microshiftVersion"`
+	}
+	fmt.Println(crcVersionJsonOutput)
+	var crcVersionOutput CrcVersionOutput
+	err = json.Unmarshal([]byte(crcVersionJsonOutput), &crcVersionOutput)
+	if err != nil {
+		return fmt.Errorf("error in unmarshalling crc version output json: %v", err)
+	}
+	fmt.Println("crc version version is", crcVersionOutput.Version)
+	if crcVersionOutput.Version != version.GetCRCVersion() {
+		fmt.Println("inside date check")
+		crcVersionDate, err := time.Parse("06.01.02", crcVersionOutput.Version)
+		if err != nil {
+			return fmt.Errorf("crc version doesn't match, expected '%s', actual '%s'", version.GetCRCVersion(), crcVersionOutput.Version)
+		}
+		// It's a valid date.
+		fmt.Println("crc version date : ", crcVersionDate)
+		fmt.Println("YYYY-MM-DD HH:MM:SS:", crcVersionDate.Format("2006-01-02 15:04:05"))
+		//Shall we also verify if it's today's date?
+	}
+	fmt.Println("crc version commit is ", crcVersionOutput.Commit)
+	if crcVersionOutput.Commit != version.GetCommitSha() {
+		return fmt.Errorf("crc version commit sha don't match, expected '%s', actual '%s'", version.GetCommitSha(), crcVersionOutput.Commit)
+	}
+	fmt.Println("crc version opensift is ", crcVersionOutput.OpenShiftVersion)
+	if len(crcVersionOutput.OpenShiftVersion) == 0 {
+		return fmt.Errorf("expected OpenShift version to be set in crc version output")
+	}
+	fmt.Println("crc version microshiftt version is ", crcVersionOutput.MicroShiftVersion)
+	if len(crcVersionOutput.MicroShiftVersion) == 0 {
+		return fmt.Errorf("expected MicroShift version to be set in crc version output")
+	}
+	return nil
 }
 
 func CheckCRCStatus(state string) error {
