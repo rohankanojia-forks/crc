@@ -3,7 +3,7 @@ CRC - Runs Containers
 
 - [Introduction](https://github.com/crc-org/crc#intro-to-crc)
 - [Usage data](https://github.com/crc-org/crc#usage-data)
-- [Documentation](https://github.com/crc-org/crc#documentation)
+- [Documentation](https://github.com/crc-org/crc#documentation )
 - [Community](https://github.com/crc-org/crc#community)
 
 [![main](https://github.com/crc-org/crc/actions/workflows/make-check.yml/badge.svg?branch=main)](https://github.com/crc-org/crc/actions/workflows/make-check.yml) [![macos pkg](https://github.com/crc-org/crc/actions/workflows/macos-installer.yml/badge.svg)](https://github.com/crc-org/crc/actions/workflows/macos-installer.yml) [![rpm](https://github.com/crc-org/crc/actions/workflows/make-rpm.yml/badge.svg)](https://github.com/crc-org/crc/actions/workflows/make-rpm.yml) [![win](https://github.com/crc-org/crc/actions/workflows/make-check-win.yml/badge.svg)](https://github.com/crc-org/crc/actions/workflows/make-check-win.yml)
